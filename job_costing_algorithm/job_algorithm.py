@@ -23,6 +23,9 @@ class JobAlgorithm:
     ct_split_final_payout = ct_split - down_payment
     sub_split_percentage = self.job_info['sub_split']
     sub_split = labor * sub_split_percentage
+    
+    self.ct_split_final_payout = ct_split_final_payout
+    self.sub_split = sub_split
 
     # TODO: I think this would be better as a dataframe?
     result = pd.Series(
@@ -32,7 +35,8 @@ class JobAlgorithm:
       'ct_split', 'ct_split_final_payout', 'sub_split_percentage', 'sub_split'])
     return result
 
-  def calculate_painter_rates(self, sub_split):
+  def calculate_painter_rates(self):
+    initial_sub_split = self.sub_split
     labor_info = self.job_info['labor_info']
     row_labels = pd.Index(["weight", "hours", "total_hours", "payout", "hourly_average"], name="rows")
     painter_names = []
@@ -43,8 +47,17 @@ class JobAlgorithm:
       painter_name = painter['name']
       weight = painter['weight']
       hours = painter['hours']
-      payout = sub_split * weight * (hours / total_hours)
+      payout = initial_sub_split * weight * (hours / total_hours)
       hourly_average = payout / hours
+
+      if self.sub_split > 0 and self.sub_split > payout:
+        self.sub_split = self.sub_split - payout
+      elif self.ct_split_final_payout > 0 and self.ct_split_final_payout > payout:
+        self.ct_split_final_payout = self.ct_split_final_payout - payout
+      else:
+        self.sub_split = 0
+        self.ct_split_final_payout = 0
+        print('ERROR ERROR ERROR Payouts are greater than splits')
 
       painter_data.append(weight)
       painter_data.append(hours)
@@ -62,9 +75,16 @@ class JobAlgorithm:
   def calculate_job_cost(self):
     result = {}
     overall_costs = self.calculate_overall_costs()
-    sub_split = overall_costs['sub_split']
+    # sub_split = overall_costs['sub_split']
+    # result['overall_costs'] = overall_costs
+    result['painter_rates'] = self.calculate_painter_rates()
+
+    overall_costs['ct_split_final_payout'] = self.ct_split_final_payout
+    overall_costs['sub_split_left_over'] = self.sub_split
+    # overall_costs['sub_split'] = self.sub_split
+
     result['overall_costs'] = overall_costs
-    result['painter_rates'] = self.calculate_painter_rates(sub_split)
+
 
     return result
 
