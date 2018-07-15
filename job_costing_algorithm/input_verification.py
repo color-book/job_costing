@@ -21,6 +21,7 @@ class InputVerification:
     if splits_add_correctly:
       return formatted_job_info
 
+
   def splits_should_equal_one_hundred(self, ct_split, sub_split):
     return ct_split + sub_split == 1
 

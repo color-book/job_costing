@@ -18,7 +18,8 @@ def calculate_job():
     painter_rates = format_painter_results(job_cost_results['painter_rates'])
     result = {
         "overall_costs": json.loads(job_cost_results['overall_costs'].to_json()),
-        "painter_rates": painter_rates
+        "painter_rates": painter_rates,
+        "costing_errors": job_cost_results['costing_errors']
     }
     return jsonify(result)
 

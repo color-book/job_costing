@@ -8,6 +8,8 @@ class JobAlgorithm:
   '''
   def __init__(self, job_info):
     self.job_info = job_info
+    self.errors_present = False
+    self.error_message = ''
 
   def calculate_overall_costs(self):
     # result = pd.Series()
@@ -47,17 +49,23 @@ class JobAlgorithm:
       painter_name = painter['name']
       weight = painter['weight']
       hours = painter['hours']
-      payout = initial_sub_split * weight * (hours / total_hours)
-      hourly_average = payout / hours
+      earnings = initial_sub_split * weight * (hours / total_hours)
+      payout = earnings + painter['reimbursement'] - painter['rental']
+      hourly_average = earnings / hours
 
       if self.sub_split > 0 and self.sub_split > payout:
         self.sub_split = self.sub_split - payout
-      elif self.ct_split_final_payout > 0 and self.ct_split_final_payout > payout:
-        self.ct_split_final_payout = self.ct_split_final_payout - payout
+      elif self.ct_split_final_payout > 0 and (self.ct_split_final_payout > payout or self.ct_split_final_payout > (payout - self.sub_split)):
+        self.ct_split_final_payout = self.ct_split_final_payout - (payout - self.sub_split)
+        if self.sub_split > 0:
+          self.sub_split = 0
       else:
+        self.ct_split_final_payout = self.ct_split_final_payout - (payout - self.sub_split)
         self.sub_split = 0
-        self.ct_split_final_payout = 0
-        print('ERROR ERROR ERROR Payouts are greater than splits')
+        self.errors_present = True
+        self.error_message = '''ERROR: Payout totals are greater than the split totals. The contractor split is now negative.
+        Sub Contractor Payouts are first subtracted from the Sub Contractor split. Once that reaches zero
+        they're then taken from the Contractor split. If possible, please adjust accordingly.'''
 
       painter_data.append(weight)
       painter_data.append(hours)
@@ -84,6 +92,10 @@ class JobAlgorithm:
     # overall_costs['sub_split'] = self.sub_split
 
     result['overall_costs'] = overall_costs
+    result['costing_errors'] = {
+      "errors": self.errors_present,
+      "error_message": self.error_message
+    }
 
 
     return result
