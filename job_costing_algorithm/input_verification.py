@@ -8,7 +8,9 @@ class InputVerification:
   def verify_correct_data_and_format(self, job_info):
     formatted_job_info = {
       'job_total': float(job_info['job_total']),
-      'down_payment_percentage': float(job_info['down_payment_percentage']), 
+      'down_payment_percentage': float(job_info['down_payment_percentage']),
+      'down_payment_amount': float(job_info['down_payment_amount']), 
+      'use_down_payment_percentage': job_info['use_down_payment_percentage'],
       'materials': job_info['materials'],
       'total_materials': sum(job_info['materials']),
       'ct_split': float(job_info['ct_split']),
