@@ -12,11 +12,25 @@ class JobAlgorithm:
     self.errors_present = False
     self.error_message = ''
 
+  def verify_labor_revenue_bonus(self, labor_info):
+    bonus = False
+    amount = 0
+    for painter in labor_info:
+      if painter['revenue_bonus']:
+        bonus = True
+        amount = amount + painter['bonus_percentage']
+    return (bonus, amount)
+
   def calculate_overall_costs(self):
     job_total = self.job_info['job_total']
     down_payment_percentage = self.job_info['down_payment_percentage']
     down_payment_amount = self.job_info['down_payment_amount']
     use_percentage = self.job_info['use_down_payment_percentage']
+    revenue_bonus, bonus_amount = self.verify_labor_revenue_bonus(self.job_info['labor_info'])
+
+    if revenue_bonus and bonus_amount > 0:
+      self.initial_job_total = job_total
+      job_total = job_total - (job_total * bonus_amount)
 
     # If user used percentage
     if use_percentage:
@@ -33,6 +47,10 @@ class JobAlgorithm:
     sub_split_percentage = self.job_info['sub_split']
     sub_split = labor * sub_split_percentage
     
+    # ct_split_initial_payout is needed to calculate
+    # bonuses. ct_split_final_payout is the contractors actual
+    # payout
+    self.ct_split_initial_payout = ct_split_final_payout
     self.ct_split_final_payout = ct_split_final_payout
     self.sub_split = sub_split
 
@@ -48,7 +66,7 @@ class JobAlgorithm:
   def calculate_painter_rates(self):
     initial_sub_split = self.sub_split
     labor_info = self.job_info['labor_info']
-    row_labels = pd.Index(["weight", "hours", "total_hours", "training_payout", "payout", "hourly_average"], name="rows")
+    row_labels = pd.Index(["weight", "hours", "total_hours", "training_payout", "bonus_amount", "payout", "hourly_average"], name="rows")
     total_hours = sum([i['hours'] for i in labor_info])
     painter_names = []
     painters_that_provided_training = []
@@ -56,6 +74,7 @@ class JobAlgorithm:
 
     # Sort list to put trainee's first
     labor_info.sort(key=lambda k: k["in_training"], reverse=True)
+
     for painter in labor_info:
       painter_data = []
       painter_name = painter['name']
@@ -65,6 +84,18 @@ class JobAlgorithm:
       payout = earnings + painter['reimbursement'] - painter['rental']
       hourly_average = earnings / hours
       training_payout = 0
+      bonus_amount = 0
+
+      if painter['add_bonus']:
+        if painter['revenue_bonus']:
+          # Need to check if there are any bonuses in the other function.
+          # Pull those out and then use that to pay for these bonuses
+          bonus_amount = self.initial_job_total * painter['bonus_percentage']
+          payout = payout + bonus_amount
+        if painter['gp_bonus']:
+          # This bonus comes out of the Contractor Payout
+          bonus_amount = self.ct_split_initial_payout * painter['bonus_percentage']
+          payout = payout + bonus_amount
 
       # Increasing Trainers payout
       if len(painters_that_provided_training):
@@ -105,6 +136,7 @@ class JobAlgorithm:
       painter_data.append(hours)
       painter_data.append(total_hours)
       painter_data.append(training_payout)
+      painter_data.append(bonus_amount)
       painter_data.append(payout)
       painter_data.append(hourly_average)
 
