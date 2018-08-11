@@ -18,7 +18,8 @@ def calculate_job():
     painter_rates = format_painter_results(job_cost_results['painter_rates'])
     result = {
         "overall_costs": json.loads(job_cost_results['overall_costs'].to_json()),
-        "painter_rates": painter_rates
+        "painter_rates": painter_rates,
+        "costing_errors": job_cost_results['costing_errors']
     }
     return jsonify(result)
 
@@ -30,6 +31,8 @@ def format_painter_results(painter_rates):
         painter_info['weight'] = painter_rates[painter]['weight']
         painter_info['hours'] = painter_rates[painter]['hours']
         painter_info['total_hours'] = painter_rates[painter]['total_hours']
+        painter_info['training_payout'] = painter_rates[painter]['training_payout']
+        painter_info['bonus_amount'] = painter_rates[painter]['bonus_amount']
         painter_info['payout'] = painter_rates[painter]['payout']
         painter_info['hourly_average'] = painter_rates[painter]['hourly_average']
         return_values.append(painter_info)

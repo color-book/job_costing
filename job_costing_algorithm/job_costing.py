@@ -5,14 +5,14 @@ try:
     from .input_verification import InputVerification
     from .job_algorithm import JobAlgorithm
 except ImportError:
-    print('Relative import failed')
+    print('Relative import not needed')
 
 try:
     # Trying to find module on sys.path
     from input_verification import InputVerification
     from job_algorithm import JobAlgorithm
 except ModuleNotFoundError:
-    print('Absolute import failed')
+    print('Absolute import not needed')
 
 class JobCosting:
 
