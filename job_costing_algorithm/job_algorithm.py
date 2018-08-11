@@ -150,13 +150,11 @@ class JobAlgorithm:
   def calculate_job_cost(self):
     result = {}
     overall_costs = self.calculate_overall_costs()
-    # sub_split = overall_costs['sub_split']
-    # result['overall_costs'] = overall_costs
+
     result['painter_rates'] = self.calculate_painter_rates()
 
     overall_costs['ct_split_final_payout'] = self.ct_split_final_payout
     overall_costs['sub_split_left_over'] = self.sub_split
-    # overall_costs['sub_split'] = self.sub_split
 
     result['overall_costs'] = overall_costs
     result['costing_errors'] = {
